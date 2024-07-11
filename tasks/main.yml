@@ -1,49 +1,43 @@
 ---
-- name: Install php package
-  apt:
-    name: "{{ php_fpm_package_name }}"
-  when: php_fpm_install_package
+# - name: Create php-fpm.conf
+#   template:
+#     src: templates/php-fpm.conf.j2
+#     dest: "/etc/php/{{ php_fpm_php_version }}/fpm/php-fpm.conf"
+#   notify: Restart php
 
-- name: Auto determinate php version
-  shell: php --version | grep '^PHP' | sed 's/^PHP \([0-9]*\.[0-9]*\).*/\1/g'
-  register: php_version
-  when: php_fpm_php_version is not defined
-  changed_when: False
-
-- name: Set correct php version
-  set_fact:
-    php_fpm_php_version: "{{ php_version.stdout }}"
-  when: php_fpm_php_version is not defined and php_version.stdout is defined
-  changed_when: False
-
-- name: Delete default php-fpm pool.conf
-  file:
-    path: "/etc/php/{{ php_fpm_php_version }}/fpm/pool.d/www.conf"
-    state: absent
-
-- name: Update php.ini
-  include_tasks: update_php_ini.yml
-  with_dict: "{{ php_fpm_php_ini_values }}"
-  loop_control:
-    loop_var: section
-
-- name: Create php-fpm.conf
-  template:
-    src: templates/php-fpm.conf.j2
-    dest: "/etc/php/{{ php_fpm_php_version }}/fpm/php-fpm.conf"
-  notify: Restart php
-
-- name: Create php-fpm pool.confs
+- name: Create php-fpm pool.conf
   template:
     src: templates/pool.conf.j2
-    dest:  "/etc/php/{{ php_fpm_php_version }}/fpm/pool.d/{{ php_fpm_pool.name }}.conf"
-  with_items: "{{ php_fpm_pools }}"
+    dest:  "/etc/php/{{ php_fpm_pool.version }}/fpm/pool.d/{{ php_fpm_pool.name }}.conf"
+  vars:
+    pm_max_children: "{{php_fpm_pool.pm_max_children | default(php_fpm_pm_max_children)}}"
+    pm_start_servers: "{{php_fpm_pool.pm_start_servers | default(php_fpm_pm_start_servers)}}"
+    pm: "{{ php_fpm_pool.pm | default(php_fpm_pm)}}"
+    listen_owner: "{{ php_fpm_pool.listen_owner | default(php_fpm_pool.user)}}"
+    listen_group: "{{ php_fpm_pool.listen_group | default(php_fpm_listen_group)}}"
+  loop: "{{ php_fpm_pools }}"
   loop_control:
     loop_var: php_fpm_pool
-  notify: Restart php
+  register: pool_result
+  notify: restart php
 
-- name: Disable cron php
-  file:
-    path: "/etc/cron.d/php"
-    state: absent
-  when: php_fpm_disable_cron
+- name: Set fact for changed PHP versions
+  set_fact:
+    changed_php_versions: "{{ changed_php_versions | default([]) + [php_fpm_pool.php_fpm_pool.version] }}"
+  when: php_fpm_pool.changed
+  loop: "{{ pool_result.results }}"
+  loop_control:
+    loop_var: php_fpm_pool
+    label: "{{ php_fpm_pool.php_fpm_pool.name }}"
+
+- name: Deduplicate changed PHP versions
+  set_fact:
+    changed_php_versions: "{{ changed_php_versions | unique }}"
+  when: changed_php_versions is defined
+
+# This is just to show the collected versions
+- name: Debug changed PHP versions
+  debug:
+    msg: "Changed PHP versions: {{ changed_php_versions }}"
+  when: changed_php_versions is defined
+

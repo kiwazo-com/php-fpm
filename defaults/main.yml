@@ -1,42 +1,28 @@
 ---
-php_fpm_package_name: php-fpm
-
-php_fpm_disable_cron: False
-
-php_fpm_php_ini_values:
-  PHP:
-    expose_php:
-      - 0
-
-php_fpm_pid: /run/php-fpm.pid
-php_fpm_error_log: log/php-fpm.log
-php_fpm_log_level: notice
-php_fpm_syslog_facility: daemon
-php_fpm_syslog_ident: php-fpm
-php_fpm_emergency_restart_threshold: 0
-php_fpm_emergency_restart_interval: 0
-php_fpm_process_control_timeout: 0
-php_fpm_process_max: 0
-php_fpm_daemonize: True
-php_fpm_rlimit_files: 16400
-php_fpm_rlimit_core: 0
-php_fpm_systemd_interval: 10
-
 # Pool config defaults
 php_fpm_listen_backlog: -1
 php_fpm_listen_allowed_clients:
   - any
 php_fpm_listen_mode: "0660"
 php_fpm_pm_process_idle_timeout: 10s
-php_fpm_pm_max_requests: 0
+php_fpm_pm_max_requests: 5000
 php_fpm_ping_response: pong
 php_fpm_request_terminate_timeout: 0
 php_fpm_request_slowlog_timeout: 0
-php_fpm_slowlog: log/php-fpm.log.slow
-php_fpm_catch_workers_output: False
+php_fpm_slowlog: php-fpm.log.slow
 php_fpm_clear_env: True
 php_fpm_security_limit_extensions:
   - .php
   - .phar
 php_fpm_access_format: "%R - %u %t \"%m %r\" %s"
-php_fpm_install_package: true
+php_fpm_listen_group: caddy
+php_fpm_pm: dynamic
+php_fpm_pm_max_children: 3
+php_fpm_pm_min_spare_servers: 1
+php_fpm_pm_max_spare_servers: 3
+php_fpm_catch_workers_output: true
+php_fpm_common_envs: {}
+php_fpm_common_php_flags: {}
+php_fpm_common_php_admin_flags: {}
+php_fpm_common_php_values: {}
+php_fpm_common_php_admin_values: {}

@@ -1,6 +1,12 @@
 # php-fpm
 
-This is an Ansible role which sets up a php-fpm instance and configures the pools.
+This is an Ansible role which sets up php-fpm pools. It's based on https://github.com/stuvusIT/php-fpm, but diverged from it.
+
+Compared to stuvusIT's version, the two main differences are:
+
+1. It focusses only pool configuration, it doesn't bother installing packages or even setting default php.ini settings. The role assumes you've done that prior to configuring the pools. The role works in tandem with e.g. https://github.com/lukasic/ansible-role-multi-php
+
+2. It supports multiple php versions. You can have one pool running PHP 8.1, two pool on 8.3 and 4 on 8.2.
 
 
 ## Requirements
@@ -12,45 +18,7 @@ Debian or Ubuntu
 
 | Name                                  | Required/Default         | Description                                                                                                                                               |
 |:--------------------------------------|:------------------------:|:----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `php_fpm_package_name`                | `php-fpm`                | The name of the apt package to install, e.g. `php8.0-fpm` or `php7.3-fpm`.                                                                                |
-| `php_fpm_disable_cron`                | `False`                  | Setting this to `True` removes the cron script to send emails for PHP warnings.                                                                           |
 | `php_fpm_pools`                       | :heavy_check_mark:       | List of php-fpm pools to define, see [pools](#pools).                                                                                                     |
-| `php_fpm_ini_values`                  | `{PHP: {expose_php: 0}}` | Dict of `php.ini` values, see [php.ini](#php.ini).                                                                                                        |
-| `php_fpm_php_version`                 | **auto determined**      | PHP version (used to specify correct include paths).                                                                                                      |
-| `php_fpm_pid`                         | `/run/php-fpm.pid`       | Path to PID file (`/var` is prepended for relative paths)                                                                                                 |
-| `php_fpm_error_log`                   | `log/php-fpm.log`        | Path to PID file (`/var` is prepended for relative paths)                                                                                                 |
-| `php_fpm_log_level`                   | `notice`                 | Log level - possible values are `alert`, `error`, `warning`, `notice`, `debug`.                                                                           |
-| `php_fpm_syslog_facility`             | `daemon`                 | Used to specify what type of program is logging the message.                                                                                              |
-| `php_fpm_syslog_ident`                | `php-fpm`                | Prepended to every log message.                                                                                                                           |
-| `php_fpm_emergency_restart_threshold` | `0`                      | If this number of child processes exit with SIGSEGV or SIGBUS within the time interval set by `php_fpm_emergency_restart_interval` then FPM will restart. |
-| `php_fpm_emergency_restart_interval`  | `0`                      | Interval of time used by emergency restart interval to determine when a graceful restart will be initiated.                                               |
-| `php_fpm_process_control_timeout`     | `0`                      | Time limit for child processes to wait for a reaction on signals from master.                                                                             |
-| `php_fpm_process_max`                 | `0`                      | The maximum number of processes FPM will fork.                                                                                                            |
-| `php_fpm_process_priority`            | :heavy_multiplication_x: | Specify the `nice` priority to apply to the master process                                                                                                |
-| `php_fpm_daemonize`                   | `True`                   | Whether to send FPM to background                                                                                                                         |
-| `php_fpm_rlimit_files`                | `16400`                  | Set open file descriptor rlimit for the master process.                                                                                                   |
-| `php_fpm_rlimit_core`                 | `0`                      | Set max core size rlimit for the master process.                                                                                                          |
-| `php_fpm_events_mechanism`            | :heavy_multiplication_x: | Specify the event mechanism FPM will use. The following is available: `select`, `pool`, `epoll`.                                                          |
-| `php_fpm_systemd_interval`            | `10`                     | Specify the interval (in seconds) between health report notification to systemd.                                                                          |
-
-
-### php.ini
-
-`php_fpm_php_ini_values` is a dict containing the sections as keys.
-Each section is another dict containing the option value as key.
-Each option entry is a list containing the values to be written under that section and option.
-See the following example:
-
-```
-php_fpm_php_ini_values:
-  SECTION NAME: # Name from the php.ini file section where the variable is supposed to live.
-    OPTION NAME: # The actual variable name
-      - value1 # The value/values that the option should have (Option values are treated as a list since Ansible can not differentiate between types.)
-      - value2
-```
-
-To see all vars possible for `php.ini` see the [php.ini page](https://secure.php.net/manual/de/ini.list.php).
-
 
 ### Pools
 Each pool is specified by a dict in the `php_fpm_pools` list.
@@ -58,6 +26,7 @@ Each pool is specified by a dict in the `php_fpm_pools` list.
 | Name                        | Required/Default                                            | Description                                                                                                                                                            |
 |:----------------------------|:-----------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `name`                      | :heavy_check_mark:                                          | Name of the pool                                                                                                                                                       |
+| `version`                   | :heavy_check_mark:                                          | PHP version this pool uses (e.g. `8.3`) |
 | `listen`                    | :heavy_check_mark:                                          | The address on which to accept FastCGI requests. Valid syntaxes are: 'ip.add.re.ss:port', 'port', '/path/to/unix/socket'.                                              |
 | `user`                      | :heavy_check_mark:                                          | Unix user running the FPM processes.                                                                                                                                   |
 | `group`                     | :heavy_multiplication_x:                                    | Unix group running the FPM processes.                                                                                                                                  |
@@ -106,6 +75,7 @@ Only the `PHP_INI_PERDIR` and `PHP_INI_ALL` [directives](https://secure.php.net/
 ```yml
 php_fpm_pools:
   - name: fpm-host
+    version: 8.1
     listen: /path/to/unix/socket
     user: www-data
     pm: static
@@ -116,15 +86,6 @@ php_fpm_pools:
       TMP: /var/tmp
     php_admin_values:
       open_basedir: /var/www
-php_fpm_php_ini_values:
-  APC:
-    apc.enabled:
-      - 1
-  PHP:
-    extension:
-      - php_mysqli
-      - php_ldap
-php_fpm_log_level: error
 ```
 
 
@@ -135,4 +96,5 @@ This work is licensed under a [Creative Commons Attribution-ShareAlike 4.0 Inter
 
 ## Author Information
 
- * [Fritz Otlinghaus (Scriptkiddi)](https://github.com/Scriptkiddi) _fritz.otlinghaus@stuvus.uni-stuttgart.de_
+ * Original author: [Fritz Otlinghaus (Scriptkiddi)](https://github.com/Scriptkiddi) _fritz.otlinghaus@stuvus.uni-stuttgart.de_
+ * Modified by: [Frank Louwers](https://github.com/franklouwers) _frank@kiwazo.be_

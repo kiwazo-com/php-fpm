@@ -1,5 +1,9 @@
 ---
-- name: "Restart php"
+- name: restart php
   service:
-    name: "php{{php_fpm_php_version}}-fpm"
+    name: "php{{ item }}-fpm"
     state: restarted
+  loop: "{{ changed_php_versions }}"
+  when: changed_php_versions | length > 0
+  loop_control:
+    label: "{{ item }}"
