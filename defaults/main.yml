@@ -39,3 +39,4 @@ php_fpm_security_limit_extensions:
   - .php
   - .phar
 php_fpm_access_format: "%R - %u %t \"%m %r\" %s"
+php_fpm_install_package: true

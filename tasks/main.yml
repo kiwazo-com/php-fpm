@@ -2,6 +2,7 @@
 - name: Install php package
   apt:
     name: "{{ php_fpm_package_name }}"
+  when: php_fpm_install_package
 
 - name: Auto determinate php version
   shell: php --version | grep '^PHP' | sed 's/^PHP \([0-9]*\.[0-9]*\).*/\1/g'
@@ -25,13 +26,12 @@
   with_dict: "{{ php_fpm_php_ini_values }}"
   loop_control:
     loop_var: section
-  register: reload_php
 
 - name: Create php-fpm.conf
   template:
     src: templates/php-fpm.conf.j2
     dest: "/etc/php/{{ php_fpm_php_version }}/fpm/php-fpm.conf"
-  register: reload_php
+  notify: Restart php
 
 - name: Create php-fpm pool.confs
   template:
@@ -40,14 +40,7 @@
   with_items: "{{ php_fpm_pools }}"
   loop_control:
     loop_var: php_fpm_pool
-  register: reload_php
-
-- name: Enable and start php-fpm
-  systemd:
-    name: "php{{ php_fpm_php_version }}-fpm.service"
-    state: reloaded
-    enabled: True
-  when: reload_php.changed
+  notify: Restart php
 
 - name: Disable cron php
   file:
