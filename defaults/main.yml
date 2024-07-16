@@ -15,7 +15,7 @@ php_fpm_security_limit_extensions:
   - .php
   - .phar
 php_fpm_access_format: "%R - %u %t \"%m %r\" %s"
-php_fpm_listen_group: caddy
+php_fpm_listen_group: www-data
 php_fpm_pm: dynamic
 php_fpm_pm_max_children: 3
 php_fpm_pm_min_spare_servers: 1
