@@ -26,3 +26,4 @@ php_fpm_common_php_flags: {}
 php_fpm_common_php_admin_flags: {}
 php_fpm_common_php_values: {}
 php_fpm_common_php_admin_values: {}
+php_fpm_pm_status_path: /status

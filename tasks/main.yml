@@ -21,6 +21,12 @@
   register: pool_result
   notify: restart php
 
+- name: Install FPM monitor script
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/refs/heads/master/php-fpm-healthcheck
+    dest: /usr/local/sbin/php-fpm-healthcheck
+    mode: '0755'
+
 - name: Set fact for changed PHP versions
   set_fact:
     changed_php_versions: "{{ changed_php_versions | default([]) + [php_fpm_pool.php_fpm_pool.version] }}"
@@ -40,4 +46,3 @@
   debug:
     msg: "Changed PHP versions: {{ changed_php_versions }}"
   when: changed_php_versions is defined
-

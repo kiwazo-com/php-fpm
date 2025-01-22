@@ -67,9 +67,9 @@ pm.process_idle_timeout = {{ php_fpm_pool.pm_process_idle_timeout | default(php_
 ; The number of requests each child process should execute before respawning.
 pm.max_requests = {{ php_fpm_pool.pm_max_requests | default(php_fpm_pm_max_requests)}}
 
-{% if php_fpm_pool.pm_status_path is defined %}
+{% if php_fpm_pool.pm_status_path is defined or php_fpm_pm_status_path is defined %}
 ; The URI to view the FPM status page.
-pm.status_path = {{ php_fpm_pool.pm_status_path }}
+pm.status_path = {{ php_fpm_pool.pm_status_path | default(php_fpm_pm_status_path) }}
 
 {% endif %}
 {% if php_fpm_pool.ping_path is defined %}
