@@ -1,14 +1,14 @@
 ---
 # Pool config defaults
-php_fpm_listen_backlog: -1
+php_fpm_listen_backlog: 4096
 php_fpm_listen_allowed_clients:
   - any
 php_fpm_listen_mode: "0660"
 php_fpm_pm_process_idle_timeout: 10s
-php_fpm_pm_max_requests: 5000
+php_fpm_pm_max_requests: 500
 php_fpm_ping_response: pong
-php_fpm_request_terminate_timeout: 0
-php_fpm_request_slowlog_timeout: 0
+php_fpm_request_terminate_timeout: 600
+php_fpm_request_slowlog_timeout: 50
 php_fpm_slowlog: php-fpm.log.slow
 php_fpm_clear_env: True
 php_fpm_security_limit_extensions:
